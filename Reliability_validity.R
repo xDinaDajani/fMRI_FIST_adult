@@ -3,6 +3,7 @@
 
 rm(list= ls())
 path <- dirname(rstudioapi::getActiveDocumentContext()$path)
+dir <- dirname(path)
 setwd(path)
 getwd()
 dev.off()
@@ -10,11 +11,14 @@ dev.off()
 # ==========LOAD DATA for internal consistency==============================
 acc.dat <- read.csv("Acc_data_fMRI_task_newDV_final4.23.18.csv", header = T, na = "") 
 acc_CB.dat <- read.csv("Acc_data_computer_task_final4.9.18.csv", header = T)
-
-
+library(readxl)
+RBQ.dat <- read_excel(paste0(dirname(path), '/FST_export_7.24.18.xlsx'), na="-999")
+RBQ.dat <- RBQ.dat[52:81]
+names(RBQ.dat)
 
 # Load item-level data from subject-level csvs
 data = '/Volumes/Groups/LUddin_Lab/Lab/Experiments/FIST/Data_adults'
+# nTPs x 11 matrix per subject for n=150
 FILES <- list.files(data)
 # initialize empty dataframe for items in each run, where rows are subjects and columns are item-level accuracy
 items_Run1 <- matrix(, nrow = 32, ncol = 10)
@@ -46,7 +50,7 @@ for (i in 1:length(FILES)) {
   }
 }
 
-# items_Run1 is a kxm matrix with item responses, k subjects in rows and m items in columns
+# items_Run1 is a kxm matrix with item responses, k subjects in tows and m items in columns
 
 #can concatenate Runs 1 and 2 to get a 32 x 20 matrix 
 
@@ -58,11 +62,44 @@ items_Run3and4 <- cbind(items_Run3, items_Run4)
 #install.packages("DescTools")
 library(DescTools)
 
-# Combining Runs 1 and 2
+CronbachAlpha(items_Run1, conf.level = NA, cond = TRUE, na.rm = FALSE)
+CronbachAlpha(items_Run2, conf.level = NA, cond = TRUE, na.rm = FALSE)
+CronbachAlpha(items_Run3, conf.level = NA, cond = TRUE, na.rm = FALSE)
+CronbachAlpha(items_Run4, conf.level = NA, cond = TRUE, na.rm = FALSE)
+
+# Combining Runs 1 and 2?
 CronbachAlpha(items_Run1and2, conf.level = .95, cond = TRUE, na.rm = FALSE)
 
-# Combining Runs 3 and 4
+# Combining Runs 3 and 4?
 CronbachAlpha(items_Run3and4, conf.level = .95, cond = TRUE, na.rm = FALSE)
+
+
+# Investigating item 8 Run 1 and item 2 Run 3
+
+  # plot of mean acc for items in Run 1
+  library(ggplot2)
+  column.names <- c("Item1", "Item2", "Item3", "Item4", "Item5", 
+                      "Item6", "Item7", "Item8", "Item9", "Item10")
+  Run1 <- data.frame(items_Run1)
+  colnames(Run1)<-column.names
+  library(psych)
+  describe(Run1)
+  Run1<-stack(Run1, select=c("Item1", "Item2", "Item3", "Item4", "Item5", 
+                             "Item6", "Item7", "Item8", "Item9", "Item10"))
+  colnames(Run1) <- c("Accuracy", "Item")
+  p <- ggplot(Run1, aes(x=Item, y=Accuracy)) + geom_boxplot()
+  p
+
+  
+  # Run 3
+  Run3 <- data.frame(items_Run3)
+  colnames(Run3)<-column.names
+  describe(Run3)
+  Run3<-stack(Run3, select=c("Item1", "Item2", "Item3", "Item4", "Item5", 
+                             "Item6", "Item7", "Item8", "Item9", "Item10"))
+  colnames(Run3) <- c("Accuracy", "Item")
+  p <- ggplot(Run3, aes(x=Item, y=Accuracy)) + geom_boxplot()
+  p
 
 # ==========Test-retest reliability==================================================
 
@@ -124,7 +161,8 @@ dev.off()
 
 library(foreign)
 library("ggplot2")
-BRIEF.dat <- read.spss("/Volumes/Groups/LUddin_Lab/Lab/Dina Dajani/Projects/FIST_GLM/Data/Adult_BRIEF_data_16.sav", to.data.frame = T)
+BRIEF.dat <- read.spss(paste0(dir, "/Adult_BRIEF_data_16.sav"), to.data.frame = T)
+colnames(BRIEF.dat)[1] <- "PID"
 
 # Average acc_RT across runs
 avg.acc_RT <- rowMeans(acc.dat[,14:17])
@@ -132,9 +170,8 @@ avg.acc_RTdf <- as.data.frame(rowMeans(acc.dat[,14:17]))
 colnames(avg.acc_RTdf) <- "avg.acc_RT"
 acc.dat$avg.acc_RT <-avg.acc_RTdf$avg.acc_RT
 
-# Create dataframe the merged spss file and accRT file based on PID
+# Create dataframe the merges spss file and accRT file based on PID
 
-colnames(BRIEF.dat)[1] <- "PID"
 BRIEF_fmridata <- merge(BRIEF.dat, acc.dat, by="PID")
 attach(BRIEF_fmridata)
 cor.test(Shift_T, avg.acc_RT)
@@ -159,14 +196,6 @@ cor.test(WorkingMem_T, avg.acc_RT)
 cor.test(Shift_T, Inhibit_T) 
 cor.test(Shift_T, WorkingMem_T)
 cor.test(Inhibit_T, WorkingMem_T)
-
-# Correlation table between BRIEF scores and average Acc/RT
-subset.cor <- BRIEF_fmridata[c("avg.acc_RT", "Shift_T", "Inhibit_T", "WorkingMem_T")]
-colnames(subset.cor) <- c("Average Acc-RT", "BRIEF Shift", "BRIEF Inhibition", "BRIEF Working Memory")
-#install.packages("apaTables")
-library(apaTables)
-apa.cor.table(subset.cor, filename = "CORR.doc")
-
 detach(BRIEF_fmridata)
 
 #========== Validity analyses: RBQ-fMRI task correlations==============================
@@ -176,20 +205,75 @@ avg.acc_RT <- rowMeans(acc.dat[,14:17])
 avg.acc_RTdf <- as.data.frame(rowMeans(acc.dat[,14:17]))
 colnames(avg.acc_RTdf) <- "avg.acc_RT"
 acc.dat$avg.acc_RT <-avg.acc_RTdf$avg.acc_R
-colnames(BRIEF.dat)[1] <- "PID"
-RBQ <- c("PID", "AdultReptitiveBehaviorRBQ_IS_Score",
-         "AdultReptitiveBehaviorRBQ_RMB_Score",
-         "AdultReptitiveBehaviorRBQ_Total_Score")
-RBQ.dat<-BRIEF.dat[RBQ]
+colnames(RBQ.dat)[1] <- "PID"
+RBQ <- c("PID", "AdultReptitiveBehavior::RBQ_IS_Score",
+         "AdultReptitiveBehavior::RBQ_RMB_Score",
+         "AdultReptitiveBehavior::RBQ_Total_Score")
+RBQ.dat<-RBQ.dat[RBQ]
 RBQ_fmridata <- merge(RBQ.dat, acc.dat, by="PID")
+RBQ_BRIEF_fmridata <-merge(RBQ_fmridata, BRIEF.dat, by="PID")
 
 library(psych)
-describe(RBQ_fmridata)
-hist(RBQ_fmridata$AdultReptitiveBehaviorRBQ_IS_Score)
-hist(RBQ_fmridata$AdultReptitiveBehaviorRBQ_RMB_Score)
-hist(RBQ_fmridata$AdultReptitiveBehaviorRBQ_Total_Score)
+# higher scores indicate worse RRBs
+describe(RBQ_fmridata[,2:21])
+hist(RBQ_fmridata$"AdultReptitiveBehavior::RBQ_IS_Score", main="IS")
+hist(RBQ_fmridata$"AdultReptitiveBehavior::RBQ_RMB_Score",main="RMB")
+hist(RBQ_fmridata$"AdultReptitiveBehavior::RBQ_Total_Score", main="Total")
 
-cor.test(AdultReptitiveBehaviorRBQ_IS_Score, avg.acc_RT)
-cor.test(AdultReptitiveBehaviorRBQ_RMB_Score, avg.acc_RT)
-cor.test(AdultReptitiveBehaviorRBQ_Total_Score, avg.acc_RT)
+colnames(RBQ_fmridata)[colnames(RBQ_fmridata) == "AdultReptitiveBehavior::RBQ_IS_Score"] <- "RBQ_IS_Score"
+colnames(RBQ_fmridata)[colnames(RBQ_fmridata) == "AdultReptitiveBehavior::RBQ_RMB_Score"] <- "RBQ_RMB_Score"
+colnames(RBQ_fmridata)[colnames(RBQ_fmridata) == "AdultReptitiveBehavior::RBQ_Total_Score"] <- "RBQ_Total_Score"
+attach(RBQ_fmridata)
+cor.test(RBQ_IS_Score, avg.acc_RT)
+cor.test(RBQ_RMB_Score, avg.acc_RT)
+cor.test(RBQ_Total_Score, avg.acc_RT)
+detach(RBQ_fmridata)
 
+attach(RBQ_BRIEF_fmridata)
+cor.test(Shift_T, RBQ_IS_Score)
+cor.test(Shift_T, RBQ_RMB_Score) 
+cor.test(Shift_T, RBQ_Total_Score)
+detach(RBQ_BRIEF_fmridata)
+
+subset <-RBQ_fmridata[c("PID", "RBQ_IS_Score", "RBQ_RMB_Score", "RBQ_Total_Score", "avg.acc_RT")]
+datalong <- reshape(data=subset, 
+                    varying =2:4, 
+                    v.names = "RepetitiveBehaviors", 
+                    timevar = "Subscale",
+                    idvar = "PID",
+                    direction = "long")
+datalong$Subscale <-factor(datalong$Subscale)
+library(plyr)
+datalong$Subscale <- revalue(datalong$Subscale, c("1"="IS", "2"= "RMB", "3"="Total"))
+describeBy(datalong$RepetitiveBehaviors, datalong$Subscale)
+
+p <- ggplot(datalong, aes(x=avg.acc_RT, y=RepetitiveBehaviors, color=Subscale, shape=Subscale)) +
+  geom_point(size=2) +   
+  geom_smooth(method=lm) +
+  scale_color_manual(labels=c("IS", "RMB", "Total"), values=c("blue", "red", "gray22")) +
+  scale_shape_manual(values=c(23, 22, 21)) +
+  theme_classic() +
+  ggtitle("fMRI Task Ecological Validity") +
+  labs(x="fMRI Task Acc-RT", y = "Repetitive Behaviors") +
+  theme(plot.title = element_text(hjust = .5, size=16), axis.text=element_text(size=14), axis.title.y=element_text(size=14), axis.title.x=element_text(size=14))
+p
+
+ggsave(p, 
+       filename = "plots/fMRI task/RBQ_fMRI_Convergent_Validity.pdf",
+       device=cairo_pdf,
+       width=5,
+       height=5,
+       units = "in")
+
+dev.off()
+
+# ==========Validity analyses: Correlation Table======================================================================
+
+# Correlation table between BRIEF scores, RBQ scores and average Acc/RT
+subset.cor <- RBQ_BRIEF_fmridata[c("avg.acc_RT", "Shift_T", "Inhibit_T", "WorkingMem_T", "RBQ_RMB_Score","RBQ_IS_Score", "RBQ_Total_Score")]
+colnames(subset.cor) <- c("fMRI average Acc-RT", "BRIEF-A Shift", "BRIEF-A Inhibition", "BRIEF-A Working Memory",
+                        "RBQ-2A RMB","RBQ-2A IS", "RBQ-2A Total")
+#install.packages("apaTables")
+library(apaTables)
+apa.cor.table(subset.cor, filename = paste0(path, "/Tables/Correlation.doc"))
+#may have to convert word doc to rich text format then open .rtf file in word
