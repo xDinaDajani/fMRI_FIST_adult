@@ -97,17 +97,17 @@ colnames(fmri_flex_control) <- c("MeanAccuracy", "Run", "TrialType")
 library(ggplot2)
 p <- ggplot(fmri_flex_control, aes(x=Run, y=MeanAccuracy, group=interaction(Run, TrialType))) +
   geom_violin(position=position_dodge(.5), aes(fill=TrialType), scale="width") + 
-  scale_fill_manual(values=c("azure1","#999999")) 
-p + geom_boxplot(width=.1, fill="white", position=position_dodge(.5)) +
+  scale_fill_manual(values=c("azure1","#999999")) +
+  geom_boxplot(width=.1, fill="white", position=position_dodge(.5)) +
   theme_classic() + 
   labs(x="", y = "Mean accuracy") +
   ggtitle("fMRI Task Accuracy") +
-  theme(plot.title = element_text(hjust = .5))
-
+  theme(plot.title = element_text(hjust = .5, size=16), axis.text=element_text(size=12), axis.title.y=element_text(size=14))
+p
 ggsave(p, 
-       filename = "rplot.pdf",
+       filename = "plots/fMRI task/SuppFig6.pdf",
        device=cairo_pdf,
-       width=5,
+       width=6.5,
        height=5,
        units = "in")
 

@@ -164,3 +164,116 @@ sumstats <- with(acc.dat, psych::describe(acc.dat[,2:ncol(acc.dat)]))
   summary(Lme.mod)
   summary(glht(Lme.mod, linfct=mcp(Run="Tukey")))  
 
+#=====Check on behavioral outliers based on both flex & control trial acc================
+
+#outliers are defined as values lying outside the 1.5*interquartile range (outside of 25th - 75th percentiles) on BOTH flexibility and control trials 
+
+# the below loop only considers Flexibility trials (Accuracy)
+  for (run in 1:4) 
+    {
+    outlier_values_fMRIacc <- boxplot.stats(acc.dat[,run+1])$out
+    boxplot(acc.dat[,run+1], main = "Mean fMRI Task Accuracy Flex", boxwex = .1)
+    mtext(paste("Outliers: ", paste(outlier_values_fMRIacc, collapse=",   ")), cex=1)
+    if (length(outlier_values_fMRIacc) > 1) {
+      for (outlier in 1:length(outlier_values_fMRIacc)) {
+        PID[outlier] <- as.character(acc.dat[which(acc.dat[,run+1] == outlier_values_fMRIacc[outlier], arr.ind=TRUE), 1])
+        if (outlier == 1) {
+          cat("Run:", run, ", Outliers identified:",  length(outlier_values_fMRIacc), "\n")
+        }
+        cat("PID:", PID[outlier])
+      }
+    }
+    else {
+      PID <- as.character(acc.dat[which(acc.dat[,run+1] == outlier_values_fMRIacc, arr.ind=TRUE), 1])
+      cat("Run:", run, ", Outliers identified: ",  length(outlier_values_fMRIacc), ", PID:", PID, "\n")
+    }
+  }
+
+# the below loop only considers control trials (Accuracy)
+for (run in 1:4) 
+{
+  outlier_values_fMRIacc <- boxplot.stats(acc.dat[,run+5])$out
+  boxplot(acc.dat[,run+5], main = "Mean fMRI Task Accuracy Control", boxwex = .1)
+  mtext(paste("Outliers: ", paste(outlier_values_fMRIacc, collapse=",   ")), cex=1)
+  if (length(outlier_values_fMRIacc) > 1) {
+    for (outlier in 1:length(outlier_values_fMRIacc)) {
+      PID[outlier] <- as.character(acc.dat[which(acc.dat[,run+5] == outlier_values_fMRIacc[outlier], arr.ind=TRUE), 1])
+      if (outlier == 1) {
+        cat("Run:", run, ", Outliers identified:",  length(outlier_values_fMRIacc), "\n")
+      }
+      cat("PID:", PID[outlier])
+    }
+  }
+  else {
+    PID <- as.character(acc.dat[which(acc.dat[,run+5] == outlier_values_fMRIacc, arr.ind=TRUE), 1])
+    cat("Run:", run, ", Outliers identified: ",  length(outlier_values_fMRIacc), ", PID:", PID, "\n")
+  }
+}
+  
+# the below loop only considers flex trials for ACC-RT metric
+for (run in 1:4) 
+{
+  outlier_values_fMRIacc <- boxplot.stats(acc.dat[,run+13])$out
+  boxplot(acc.dat[,run+13], main = "Mean fMRI Task Accuracy ACC-RT metric", boxwex = .1)
+  mtext(paste("Outliers: ", paste(outlier_values_fMRIacc, collapse=",   ")), cex=1)
+  if (length(outlier_values_fMRIacc) > 1) {
+    for (outlier in 1:length(outlier_values_fMRIacc)) {
+      PID[outlier] <- as.character(acc.dat[which(acc.dat[,run+13] == outlier_values_fMRIacc[outlier], arr.ind=TRUE), 1])
+      if (outlier == 1) {
+        cat("Run:", run, ", Outliers identified:",  length(outlier_values_fMRIacc), "\n")
+      }
+      cat("PID:", PID[outlier])
+    }
+  }
+  else {
+    PID <- as.character(acc.dat[which(acc.dat[,run+13] == outlier_values_fMRIacc, arr.ind=TRUE), 1])
+    cat("Run:", run, ", Outliers identified: ",  length(outlier_values_fMRIacc), ", PID:", PID, "\n")
+  }
+}
+
+#update 4/9/2018: Outliers defined as less than or equal to 50% on BOTH flexibility and control trials for a single run
+
+# create accuracy columns with NA for outliers
+acc.dat["fMRIRun1Flex_no_outliers"] <- acc.dat[,2]
+acc.dat["fMRIRun2Flex_no_outliers"] <- acc.dat[,3]
+acc.dat["fMRIRun3Flex_no_outliers"] <- acc.dat[,4]
+acc.dat["fMRIRun4Flex_no_outliers"] <- acc.dat[,5]
+acc.dat["fMRIRun1Cnt_no_outliers"] <- acc.dat[,6]
+acc.dat["fMRIRun2Cnt_no_outliers"] <- acc.dat[,7]
+acc.dat["fMRIRun3Cnt_no_outliers"] <- acc.dat[,8]
+acc.dat["fMRIRun4Cnt_no_outliers"] <- acc.dat[,9]
+
+# for loop to assign NA to Flex and Control variables with 50% or less acc
+# on BOTH Flex and control for a particular run
+for (run in 1:4) 
+{   for (row in 1:32) {
+        if (acc.dat[row,run+1] <.60 & acc.dat[row,run+5] <.60)
+        {
+          cat("Run:", run, ", Outlier identified: ", as.character(acc.dat[row,1]), "\n")
+          acc.dat[row,run+17] <- NA
+          acc.dat[row,run+21] <- NA
+        }
+}
+}
+
+# NOT USED #=============================================================================
+# per run, assign NA if outlier on BOTH flex and control trial
+
+remove_outliers <- function(x, na.rm = TRUE, ...) 
+{
+  qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
+  H <- 1.5 * IQR(x, na.rm = na.rm)
+  y <- x
+  y[x < (qnt[1] - H)] <- NA
+  y[x > (qnt[2] + H)] <- NA
+  y
+}
+acc.dat$meanfMRIacc_no_outliers <-remove_outliers(acc.dat$meanfMRIacc)
+
+outlier_values_ComputerAcc <- boxplot.stats(acc.dat$ComputerMeanFlexTrialAcc)$out
+boxplot(acc.dat$ComputerMeanFlexTrialAcc, main = "Mean Computer-based Task Accuracy", boxwex = .1)
+mtext(paste("Outliers: ", paste(outlier_values_ComputerAcc, collapse=",   ")), cex=1)
+
+
+
+
