@@ -9,9 +9,11 @@ getwd()
 acc.dat <- read.csv("Acc_data_fMRI_task_newDV_final4.23.18.csv", header = T) 
 dev.off()
 
+#Packages
+library(psych)
+
 #================Get summary stats across ALL runs=======================================
 
-library(psych)
 sumstats <- with(acc.dat, psych::describe(acc.dat[,2:ncol(acc.dat)]))
 
   # Mean of mean accuracy across all runs
@@ -82,7 +84,7 @@ sumstats <- with(acc.dat, psych::describe(acc.dat[,2:ncol(acc.dat)]))
   
 # using two-way repeated measures ANOVA to test (two within-subjects factors, Run and Trial type)
   
-  #library(lmerTest)
+  library(lmerTest)
   library(tidyr)
   library(dplyr)
   #install.packages("tidyverse")  
@@ -115,18 +117,29 @@ sumstats <- with(acc.dat, psych::describe(acc.dat[,2:ncol(acc.dat)]))
   require(nlme)         ## for lme()
   #install.packages("multcomp")
   require(multcomp)  ## for multiple comparison stuff
-  Lme.mod <- lme(run_level_acc_RT ~ Run, random = ~1 | PID/Run, data=datalong)
+  Lme.mod <- lme(avg.acc ~ Run, random = ~1 | PID/Run, data=datalong)
   anova(Lme.mod)
   summary(Lme.mod)
   summary(glht(Lme.mod, linfct=mcp(Run="Tukey")))
   
-  
-# use mlm, logit transformation for proportion data
-#fit <- lmer(avg.acc ~ time*type + (1 | pid), data = acc.dat)
-
-# if data were raw
-#fit.glm <- glmer(raw.acc ~ time*type)
-  
+#=====Changes RT for Flex trials across runs =================================================
+  acc.dat.RT <-acc.dat[,c(1,10:13)]
+  #remove subjects with any missing values because repeated measures ANOVA cannot handle missing values
+  acc.dat.RT <-na.omit(acc.dat.RT)
+  datalong <- reshape(data=acc.dat.RT, 
+                      varying =2:5, 
+                      v.names = "run_level_RT", 
+                      timevar = "Run",
+                      idvar = "PID",
+                      direction = "long")
+  datalong$Run <-factor(datalong$Run)
+  contrasts(datalong$Run) <- contr.poly(4)
+  modelRMAOV <-aov(run_level_RT~Run+Error(PID/Run), data=datalong)
+  summary(modelRMAOV, split=list(Run=list("Linear"=1, "Quadratic"=2, "Cubic"=3)))
+  Lme.mod <- lme(run_level_RT ~ Run, random = ~1 | PID/Run, data=datalong)
+  anova(Lme.mod)
+  summary(Lme.mod)
+  summary(glht(Lme.mod, linfct=mcp(Run="Tukey")))
 # =====Changes in accuracy-RT across runs================================================
   
   # Does accuracy-RT change across runs?
@@ -150,7 +163,7 @@ sumstats <- with(acc.dat, psych::describe(acc.dat[,2:ncol(acc.dat)]))
   #contrasts
   contrasts(datalong$Run) <- contr.poly(4)
   # using accuracy as outcome variable
-  # modelRMAOV <-aov(run_level_accuracy~Run+Error(PID/Run), data=datalong)  
+  #modelRMAOV <-aov(run_level_accuracy~Run+Error(PID/Run), data=datalong)  
   #using acc-RT metric as ourcome variable
   modelRMAOV <-aov(run_level_acc_RT~Run+Error(PID/Run), data=datalong) 
   summary(modelRMAOV, split=list(Run=list("Linear"=1, "Quadratic"=2, "Cubic"=3)))

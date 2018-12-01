@@ -1,0 +1,38 @@
+Weight	Nested	Procedure	TimeStartStimulus	TrialNumber	DurationTime
+1		FlexibilityTrial	0	1	8000
+1		Fixation	8	0	2000
+1		FlexibilityTrial	10	1	8000
+1		Fixation	18	0	6000
+1	SlideImage	ControlTrial	24	2	8000
+1		Fixation	32	0	2000
+1		FlexibilityTrial	34	1	8000
+1		Fixation	42	0	2000
+1		FlexibilityTrial	44	1	8000
+1		FlexibilityTrial	52	1	8000
+1		Fixation	60	0	4000
+1		FlexibilityTrial	64	1	8000
+1		Fixation	72	0	4000
+1	SlideImage	ControlTrial	76	2	8000
+1		Fixation	84	0	8000
+1	SlideImage	ControlTrial	92	2	8000
+1	SlideImage	ControlTrial	100	2	8000
+1		Fixation	108	0	6000
+1	SlideImage	ControlTrial	114	2	8000
+1		Fixation	122	0	2000
+1		FlexibilityTrial	124	1	8000
+1		Fixation	132	0	4000
+1		FlexibilityTrial	136	1	8000
+1		Fixation	144	0	2000
+1	SlideImage	ControlTrial	146	2	8000
+1		Fixation	154	0	8000
+1	SlideImage	ControlTrial	162	2	8000
+1		Fixation	170	0	6000
+1		FlexibilityTrial	176	1	8000
+1		Fixation	184	0	10000
+1	SlideImage	ControlTrial	194	2	8000
+1		Fixation	202	0	2000
+1		FlexibilityTrial	204	1	8000
+1		Fixation	212	0	6000
+1	SlideImage	ControlTrial	218	2	8000
+1		Fixation	226	0	6000
+1	SlideImage	ControlTrial	232	2	8000

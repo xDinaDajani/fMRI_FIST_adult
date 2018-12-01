@@ -15,6 +15,8 @@ library(psych)
 sumstats <- with(acc.dat, psych::describe(acc.dat[,2:ncol(acc.dat)]))
 
 # Trial-level accuracy
+acc.dat[,2]
+perc_perfect_score <-(sum(acc.dat[,2]==6))/length(acc.dat[,2])
 sumstats[1,]
 trial_level_acc_perc <- sumstats[1,3:4]/6
   trial_level_acc_perc
@@ -34,9 +36,10 @@ selection_level_acc_perc <-sumstats[2:4,3:4]/6
                         direction = "long")
     datalong$Selection <-factor(datalong$Selection)
   #contrasts
-    options(contrasts=c("contr.sum", "contr.poly"))
-  modelRMAOV <-aov(selection_level_accuracy~factor(Selection)+Error(factor(PID)), data=datalong)  
-  print(summary(modelRMAOV))  
+    contrasts(datalong$Selection) <- contr.poly(3)
+    modelRMAOV <-aov(selection_level_accuracy~Selection+Error(factor(PID)), data=datalong)  
+    print(summary(modelRMAOV))  
+    summary(modelRMAOV, split=list(Selection=list("Linear"=1, "Quadratic"=2, "Cubic"=3)))
 
 ## =====Graph out selection by selection accuracy================================
 
@@ -262,6 +265,9 @@ CBdim_all <- cbind(CBDim.vector[,1], CBDim_by_selection)
 colnames(CBdim_all) <- c("DimensionPerc", "DimensionFrequency", "Dimension", "Selection")
 CBdim_all$DimensionPerc <- CBdim_all$DimensionPerc*6
 
+# Descriptives for dimension choice at trial-level (collapsed across selections)
+describeBy((CBdim_all$DimensionPerc)/6, CBdim_all$Dimension)
+
 q <- ggplot(CBDim_by_selection, aes(x=Dimension, y=DimensionFrequency)) +
   theme_classic() + 
   geom_boxplot(data = CBdim_all, aes(x=Dimension, y=DimensionPerc),
@@ -284,8 +290,7 @@ ggsave(q,
        width=6,
        height=5,
        units = "in")
-dev.off()
-
+dev.off() 
 
 ## =====Percentage of each excluded dimension==================================
 
@@ -336,11 +341,15 @@ p
 acc.dat[is.na(acc.dat)] <- 0
 
 library(plyr)
+repeated_dimpattern <-count(acc.dat, 'Repeated_dim_pattern')
+repeated_dimpattern[,2] <- repeated_dimpattern[,2]/32
+repeated_dimpattern[order(repeated_dimpattern[,2], decreasing=TRUE),]
+
 frequency_by_uniquedimpattern <- count(acc.dat, 'Freq_repeated_dim_pattern')
 frequency_by_uniquedimpattern[,2] <- frequency_by_uniquedimpattern[,2]/32
 frequency_by_uniquedimpattern
 
-p <- ggplot(acc.dat, aes(x=Freq_repeated_dim_pattern)) +
+sump <- ggplot(acc.dat, aes(x=Freq_repeated_dim_pattern)) +
   theme_classic() +
   geom_histogram(binwidth = .8, color="black", fill="gray87") +
   geom_vline(aes(xintercept=mean(Freq_repeated_dim_pattern)),
@@ -350,9 +359,4 @@ p <- ggplot(acc.dat, aes(x=Freq_repeated_dim_pattern)) +
   theme(plot.title = element_text(hjust = .5, size=16), axis.text=element_text(size=12), axis.title.y=element_text(size=14))
 p
 
-#geom_text(stat='count', aes(label=..count..), vjust = -.75, size=3.5) +
-
-# scale_x_continuous(breaks=seq(min(acc.dat$Perc_unique_dim_pattern), max(acc.dat$Perc_unique_dim_pattern), by = .25)) +
-# scale_y_continuous(breaks=seq(0,22,2)) +
-######### how does this map to accuracy?
 

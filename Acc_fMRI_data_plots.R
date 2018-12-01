@@ -1,6 +1,5 @@
 
 ###Creating plots from behavioral data from fMRI FIST adult task#######
-#############################################################
 
 path <- dirname(rstudioapi::getActiveDocumentContext()$path)
 setwd(path)

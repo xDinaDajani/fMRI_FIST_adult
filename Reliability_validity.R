@@ -8,7 +8,7 @@ setwd(path)
 getwd()
 dev.off()
 
-# ==========LOAD DATA for internal consistency==============================
+# ==========LOAD DATA ========================================================================
 acc.dat <- read.csv("Acc_data_fMRI_task_newDV_final4.23.18.csv", header = T, na = "") 
 acc_CB.dat <- read.csv("Acc_data_computer_task_final4.9.18.csv", header = T)
 library(readxl)
@@ -21,10 +21,10 @@ data = '/Volumes/Groups/LUddin_Lab/Lab/Experiments/FIST/Data_adults'
 # nTPs x 11 matrix per subject for n=150
 FILES <- list.files(data)
 # initialize empty dataframe for items in each run, where rows are subjects and columns are item-level accuracy
-items_Run1 <- matrix(, nrow = 32, ncol = 10)
-items_Run2 <- matrix(, nrow = 32, ncol = 10)
-items_Run3 <- matrix(, nrow = 32, ncol = 10) 
-items_Run4 <- matrix(, nrow = 32, ncol = 10)
+items_Run1 <- matrix(NA, nrow = 32, ncol = 10)
+items_Run2 <- matrix(NA, nrow = 32, ncol = 10)
+items_Run3 <- matrix(NA, nrow = 32, ncol = 10) 
+items_Run4 <- matrix(NA, nrow = 32, ncol = 10)
 for (i in 1:length(FILES)) {
   for (run in 1:4) {
     pattern = paste('*_Run', run, '_*', sep="")
@@ -103,20 +103,17 @@ CronbachAlpha(items_Run3and4, conf.level = .95, cond = TRUE, na.rm = FALSE)
 
 # ==========Test-retest reliability==================================================
 
-# Histogram of combined acc-RT dependent variable per run. These DVs will be used to calculate ICC across all runs
-hist(x = acc.dat$accRT_DV_Run1)
-hist(x = acc.dat$accRT_DV_Run2)
-hist(x = acc.dat$accRT_DV_Run3)
-hist(x = acc.dat$accRT_DV_Run4)
-
 # Generating dataframe for input to ICC function, rows as subjects and columns as ratings per run
-
-ICC_data <- acc.dat[, 14:17]
+  # grabbing Acc-RT (effificency) values
+  ICC_data <- acc.dat[, 14:17]
+ICC_data_Runs12 <-ICC_data[, 1:2]
+ICC_data_Runs34 <-ICC_data[, 3:4]
 
 # Using ICC as the measure of test-retest reliability across all 4 runs
 
 library(psych)
-ICC_results <- ICC(ICC_data, missing=TRUE, alpha=.05)
+describe(ICC_data)
+ICC_results <- ICC(ICC_data, missing=FALSE, alpha=.05)
 
 ICC_results$results 
 ICC_results$summary #anova summary table
@@ -124,156 +121,48 @@ ICC_results$stats #anova statistics
 ICC_results$MSW #mean square within based upon the anova
 ICC_results$n.obs #should be 32
 ICC_results$n.judge #should be 4
+ICC_results$results[5,c(2,7:8)] #averaged across all 4 runs
+ICC_results$results[2,c(2,7:8)] #single run reli
+
+# How many repeated measures (runs) are needed for good reliability? [>.75]
+min_reli <- .75
+lower_CI_ICC2 <- ICC_results$results[2,7]
+runs <- (min_reli*(1-lower_CI_ICC2))/(lower_CI_ICC2*(1-min_reli))
+runs
+
+ICC_results_2runs <-ICC(ICC_data_Runs12, missing=TRUE, alpha=.05)
+ICC_results_2runs$results[5,c(2,7:8)]
+
+ICC_results_2runs <-ICC(ICC_data_Runs34, missing=TRUE, alpha=.05)
+ICC_results_2runs$results[5,c(2,7:8)]
 
 ##===Validity analyses: CB-fMRI task correlations========================================
 
 library("ggplot2")
 
-# Average acc_RT across runs
-avg.acc_RT <- rowMeans(acc.dat[,14:17])
-avg.acc_RTdf <- as.data.frame(rowMeans(acc.dat[,14:17]))
-colnames(avg.acc_RTdf) <- "avg.acc_RT"
-acc.dat$avg.acc_RT <-avg.acc_RTdf$avg.acc_RT
+# Average accuracy across runs
+avg.acc <-rowMeans(acc.dat[,2:5])
+cor.test(acc_CB.dat[,2], avg.acc)
+avg.accdf <- as.data.frame(avg.acc)
+colnames(avg.accdf) <- "avg.acc.fMRI.Flex"
+acc.dat$avg.acc.fMRI.Flex <-avg.accdf
 
-# Correlate the computer-based Flex_acc variable with averaged acc-RT variable across runs
-cor.test(acc_CB.dat[,2], avg.acc_RT)
-CB_fmri <- cbind(acc_CB.dat[,2], avg.acc_RTdf)
-p <- ggplot(CB_fmri, aes(x=acc_CB.dat[, 2], y=avg.acc_RT)) +
+CB_fmri <- cbind(acc_CB.dat[,2], avg.accdf)
+p <- ggplot(CB_fmri, aes(x=acc_CB.dat[, 2], y=avg.acc.fMRI.Flex)) +
   geom_point(size=2, shape=23) +   
   geom_smooth(method=lm) +
-  labs(x="Computer-Based Task Acc", y = "fMRI Task Acc-RT") +
-  ggtitle("Computer-fMRI Task Convergent Validity") +
+  labs(x="Computer-Based Task Acc", y = "fMRI Task Acc") +
+  #ggtitle("Computer-fMRI Task Convergent Validity") +
   theme_classic() +
   theme(plot.title = element_text(hjust = .5, size=16), axis.text=element_text(size=14), axis.title.y=element_text(size=14), axis.title.x=element_text(size=14)) +
-  ylim(0,10)
+  ylim(0,1)
 p
 
 ggsave(p, 
-       filename = "plots/fMRI task/Computer_fMRI_Convergent_Validity.pdf",
+       filename = "plots/Computer_fMRI_Convergent_Validity_Acc.pdf",
        device=cairo_pdf,
        width=5,
        height=5,
        units = "in")
 
 dev.off()
-
-#========== Validity analyses: BRIEF-fMRI task correlations==============================
-
-library(foreign)
-library("ggplot2")
-BRIEF.dat <- read.spss(paste0(dir, "/Adult_BRIEF_data_16.sav"), to.data.frame = T)
-colnames(BRIEF.dat)[1] <- "PID"
-
-# Average acc_RT across runs
-avg.acc_RT <- rowMeans(acc.dat[,14:17])
-avg.acc_RTdf <- as.data.frame(rowMeans(acc.dat[,14:17]))
-colnames(avg.acc_RTdf) <- "avg.acc_RT"
-acc.dat$avg.acc_RT <-avg.acc_RTdf$avg.acc_RT
-
-# Create dataframe the merges spss file and accRT file based on PID
-
-BRIEF_fmridata <- merge(BRIEF.dat, acc.dat, by="PID")
-attach(BRIEF_fmridata)
-cor.test(Shift_T, avg.acc_RT)
-ggplot(acc.dat, aes(x=avg.acc_RT, y=Shift_T)) +
-  geom_point(size=2, shape=23) +   
-  geom_smooth(method=lm, color="blue") +
-  geom_point(aes(x=avg.acc_RT, y=Inhibit_T), size=2, shape=22) +
-  geom_smooth(aes(x=avg.acc_RT, y=Inhibit_T), method=lm, color="red") +
-  geom_point(aes(x=avg.acc_RT, y=WorkingMem_T), size=2, shape=21) +
-  geom_smooth(aes(x=avg.acc_RT, y=WorkingMem_T), method=lm, color="gray22") +
-  theme_classic() +
-  ggtitle("fMRI Task Ecological Validity") +
-  labs(x="fMRI Task Acc-RT", y = "Executive Function") +
-  theme(plot.title = element_text(hjust = .5, size=16), axis.text=element_text(size=14), axis.title.y=element_text(size=14), axis.title.x=element_text(size=14))
-ggsave("Computer_fMRI_Ecological_Validity.pdf")
-
-dev.off()
-
-cor.test(Inhibit_T, avg.acc_RT)
-cor.test(WorkingMem_T, avg.acc_RT)
-
-cor.test(Shift_T, Inhibit_T) 
-cor.test(Shift_T, WorkingMem_T)
-cor.test(Inhibit_T, WorkingMem_T)
-detach(BRIEF_fmridata)
-
-#========== Validity analyses: RBQ-fMRI task correlations==============================
-
-# Average acc_RT across runs
-avg.acc_RT <- rowMeans(acc.dat[,14:17])
-avg.acc_RTdf <- as.data.frame(rowMeans(acc.dat[,14:17]))
-colnames(avg.acc_RTdf) <- "avg.acc_RT"
-acc.dat$avg.acc_RT <-avg.acc_RTdf$avg.acc_R
-colnames(RBQ.dat)[1] <- "PID"
-RBQ <- c("PID", "AdultReptitiveBehavior::RBQ_IS_Score",
-         "AdultReptitiveBehavior::RBQ_RMB_Score",
-         "AdultReptitiveBehavior::RBQ_Total_Score")
-RBQ.dat<-RBQ.dat[RBQ]
-RBQ_fmridata <- merge(RBQ.dat, acc.dat, by="PID")
-RBQ_BRIEF_fmridata <-merge(RBQ_fmridata, BRIEF.dat, by="PID")
-
-library(psych)
-# higher scores indicate worse RRBs
-describe(RBQ_fmridata[,2:21])
-hist(RBQ_fmridata$"AdultReptitiveBehavior::RBQ_IS_Score", main="IS")
-hist(RBQ_fmridata$"AdultReptitiveBehavior::RBQ_RMB_Score",main="RMB")
-hist(RBQ_fmridata$"AdultReptitiveBehavior::RBQ_Total_Score", main="Total")
-
-colnames(RBQ_fmridata)[colnames(RBQ_fmridata) == "AdultReptitiveBehavior::RBQ_IS_Score"] <- "RBQ_IS_Score"
-colnames(RBQ_fmridata)[colnames(RBQ_fmridata) == "AdultReptitiveBehavior::RBQ_RMB_Score"] <- "RBQ_RMB_Score"
-colnames(RBQ_fmridata)[colnames(RBQ_fmridata) == "AdultReptitiveBehavior::RBQ_Total_Score"] <- "RBQ_Total_Score"
-attach(RBQ_fmridata)
-cor.test(RBQ_IS_Score, avg.acc_RT)
-cor.test(RBQ_RMB_Score, avg.acc_RT)
-cor.test(RBQ_Total_Score, avg.acc_RT)
-detach(RBQ_fmridata)
-
-attach(RBQ_BRIEF_fmridata)
-cor.test(Shift_T, RBQ_IS_Score)
-cor.test(Shift_T, RBQ_RMB_Score) 
-cor.test(Shift_T, RBQ_Total_Score)
-detach(RBQ_BRIEF_fmridata)
-
-subset <-RBQ_fmridata[c("PID", "RBQ_IS_Score", "RBQ_RMB_Score", "RBQ_Total_Score", "avg.acc_RT")]
-datalong <- reshape(data=subset, 
-                    varying =2:4, 
-                    v.names = "RepetitiveBehaviors", 
-                    timevar = "Subscale",
-                    idvar = "PID",
-                    direction = "long")
-datalong$Subscale <-factor(datalong$Subscale)
-library(plyr)
-datalong$Subscale <- revalue(datalong$Subscale, c("1"="IS", "2"= "RMB", "3"="Total"))
-describeBy(datalong$RepetitiveBehaviors, datalong$Subscale)
-
-p <- ggplot(datalong, aes(x=avg.acc_RT, y=RepetitiveBehaviors, color=Subscale, shape=Subscale)) +
-  geom_point(size=2) +   
-  geom_smooth(method=lm) +
-  scale_color_manual(labels=c("IS", "RMB", "Total"), values=c("blue", "red", "gray22")) +
-  scale_shape_manual(values=c(23, 22, 21)) +
-  theme_classic() +
-  ggtitle("fMRI Task Ecological Validity") +
-  labs(x="fMRI Task Acc-RT", y = "Repetitive Behaviors") +
-  theme(plot.title = element_text(hjust = .5, size=16), axis.text=element_text(size=14), axis.title.y=element_text(size=14), axis.title.x=element_text(size=14))
-p
-
-ggsave(p, 
-       filename = "plots/fMRI task/RBQ_fMRI_Convergent_Validity.pdf",
-       device=cairo_pdf,
-       width=5,
-       height=5,
-       units = "in")
-
-dev.off()
-
-# ==========Validity analyses: Correlation Table======================================================================
-
-# Correlation table between BRIEF scores, RBQ scores and average Acc/RT
-subset.cor <- RBQ_BRIEF_fmridata[c("avg.acc_RT", "Shift_T", "Inhibit_T", "WorkingMem_T", "RBQ_RMB_Score","RBQ_IS_Score", "RBQ_Total_Score")]
-colnames(subset.cor) <- c("fMRI average Acc-RT", "BRIEF-A Shift", "BRIEF-A Inhibition", "BRIEF-A Working Memory",
-                        "RBQ-2A RMB","RBQ-2A IS", "RBQ-2A Total")
-#install.packages("apaTables")
-library(apaTables)
-apa.cor.table(subset.cor, filename = paste0(path, "/Tables/Correlation.doc"))
-#may have to convert word doc to rich text format then open .rtf file in word
