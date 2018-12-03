@@ -21,7 +21,7 @@ hist(acc.dat$fMRIRun1MeanFlexTrialAcc, main = "fMRI Run 1 Flex Trials Histogram"
 #abline(lm(acc.dat$meanfMRIacc ~ acc.dat$ComputerMeanFlexTrialAcc, data=acc.dat), col="blue", lwd=3, lty=2)
 
 
-## =======FIGURE 3: Plot ACC/RT DV Across Runs=========================  
+## =======FIGURE 4: Plot ACC/RT DV Across Runs=========================  
 # Reshape data for violin plots
 Acc.vector<-stack(acc.dat, select=c("accRT_DV_Run1", 
                                       "accRT_DV_Run2", 
@@ -58,7 +58,7 @@ ggsave(p,
        height=5,
        units = "in")
 
-#===FIGURE S6: VIOLIN PLOTS===============================================
+#===FIGURE S3: VIOLIN PLOTS===============================================
 
 # Reshape data for violin plots
 fmriAcc.vector<-stack(acc.dat, select=c("fMRIRun1MeanFlexTrialAcc", 

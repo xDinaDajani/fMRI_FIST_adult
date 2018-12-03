@@ -42,7 +42,8 @@ selection_level_acc_perc <-sumstats[2:4,3:4]/6
     summary(modelRMAOV, split=list(Selection=list("Linear"=1, "Quadratic"=2, "Cubic"=3)))
 
 ## =====Graph out selection by selection accuracy================================
-
+# Supplementary Figure 1
+    
 # Reshape data for violin plots
 CBAcc.vector<-stack(acc.dat, select=c("AccFlex1", 
                                       "AccFlex2", 
@@ -78,6 +79,7 @@ ggsave(p,
 dev.off()
 
 ## =====Histogram of total correct==============================================
+# Supplementary Figure 2
 
 summary(acc.dat$TotalCorrect)
 library(psych)
