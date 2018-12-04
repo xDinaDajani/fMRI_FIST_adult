@@ -187,12 +187,13 @@ cat(sprintf("----Runs 1and2----\nThere are %s subjects\nThere are %s features\n-
     ## Cross-validated test-set R^2
     ## alasso1_cv$cvm[1] is the cross-validated test set mean squared error of the intercept-only model.
     1 - alasso12_cv$cvm[alasso12_cv$lambda == alasso12_cv$lambda.min] / alasso12_cv$cvm[1]
-    xlab_names <-expression(lIPL%->%cerebellum, ldlPFC%->%lIPL, dACC%->%lAG, Flexibility%->%lAG, dACC%->%visual, lIFJ*Flexibility%->%visual)
+    xlab_names <-expression(lIPL%->%cerebellum, ldlPFC%->%lIPL, dACC%->%lAG, "Flexibility on lAG", dACC%->%visual, paste(lIFJ,"*", Flexibility%->%visual))
     out <- Sys.glob(paste(path, '/Pegasus/1Output/8ROIs/', script_version[1], sep = ""))
     setwd(out)
     level_string = c("Group", "Subgroup", "Individual")
     dev.off()
-    par(mfrow=c(2,3))
+    pdf("SuppFig6.pdf", width=9, height=6)
+    par(mfrow=c(2,3), mai=c(.6, .7, .75, 0.42))
     if (!(is.null(length(selected_attributes)))) {
       for (i in 1:length(selected_attributes)) {
         print(rownames(best_alasso_coef12)[selected_attributes][i])
@@ -207,11 +208,17 @@ cat(sprintf("----Runs 1and2----\nThere are %s subjects\nThere are %s features\n-
         # find correct column in x that matches with selected_attribute
         j <- which(colnames(x) == rownames(best_alasso_coef12)[selected_attributes][i])
         # plot
-        print(plot(x[,j], y, xlab=xlab_names[[i]], ylab= "FIST efficiency", main=sprintf("b=%0.2f", best_alasso_coef12[selected_attributes][i]), xlim=c(-.4, .8), ylim=c(0, 10)))
-        readline(prompt="Press [enter] to continue")
+        if (i==2 | i==5) {
+          print(plot(x[,j], y, xlab=xlab_names[[i]], ylab= "FIST efficiency", main=sprintf("b=%0.2f", best_alasso_coef12[selected_attributes][i]), xlim=c(-.4, .9), ylim=c(0, 10), col.lab="red", cex.axis=1.5, cex.lab=1.75, cex.main=2, cex=2, lwd=1.5))
+        } else if (i==6) {
+          print(plot(x[,j], y, xlab=xlab_names[[i]], ylab= "FIST efficiency", main=sprintf("b=%0.2f", best_alasso_coef12[selected_attributes][i]), xlim=c(-.4, .2), ylim=c(0, 10), cex.axis=1.5, cex.lab=1.75, cex.main=2, cex=2, lwd=1.5))
+        }
+        else {
+          print(plot(x[,j], y, xlab=xlab_names[[i]], ylab= "FIST efficiency", main=sprintf("b=%0.2f", best_alasso_coef12[selected_attributes][i]), xlim=c(-.4, .9), ylim=c(0, 10), cex.axis=1.5, cex.lab=1.75, cex.main=2, cex=2, lwd=1.5))
+        }
+        #readline(prompt="Press [enter] to continue")
       } 
     }
-    dev.print(pdf, "LASSO_plots.pdf")
     dev.off()
     
 # Runs 3 and 4
@@ -289,13 +296,13 @@ cat(sprintf("----Runs 1and2----\nThere are %s subjects\nThere are %s features\n-
     ## alasso1_cv$cvm[1] is the cross-validated test set mean squared error of the intercept-only model.
     1 - alasso1_cv$cvm[alasso1_cv$lambda == alasso1_cv$lambda.min] / alasso1_cv$cvm[1]
     
-    xlab_names <-expression(ldlPFC%->%lIPL, lAG%->%ldlPFC, dACC%->%visual, lIFJ%->%visual, Control%->%visual)
+    xlab_names <-expression(ldlPFC%->%lIPL, lAG%->%ldlPFC, dACC%->%visual, lIFJ%->%visual, "Control on visual")
     out <- Sys.glob(paste(path, '/Pegasus/1Output/8ROIs/', script_version[2], sep = ""))
     level_string = c("Group", "Subgroup", "Individual")
     setwd(out)
     dev.off()
-    par(mfrow=c(2,3))
-    #par(mfrow=c(2,3))
+    pdf("SuppFig7.pdf", width=9, height=6)
+    par(mfrow=c(2,3), mai=c(.6, .7, .75, 0.42))
     if (!(is.null(length(selected_attributes)))) {
       for (i in 1:length(selected_attributes)) {
         print(rownames(best_alasso_coef1)[selected_attributes][i])
@@ -309,10 +316,13 @@ cat(sprintf("----Runs 1and2----\nThere are %s subjects\nThere are %s features\n-
         # find correct column in x that matches with selected_attribute
         j <- which(colnames(x) == rownames(best_alasso_coef1)[selected_attributes][i])
         # plot
-        print(plot(x[,j], y, xlab=xlab_names[[i]], ylab= "FIST efficiency", main=sprintf("b=%0.2f", best_alasso_coef1[selected_attributes][i]), ylim=c(0, 10)))
-        readline(prompt="Press [enter] to continue")
+        if (i==1 | i==3) {
+          print(plot(x[,j], y, xlab=xlab_names[[i]], ylab= "FIST efficiency", main=sprintf("b=%0.2f", best_alasso_coef1[selected_attributes][i]), ylim=c(0, 10), xlim=c(-.6, .75), col.lab="red", cex.axis=1.5, cex.lab=1.75, cex.main=2, cex=2, lwd=1.5))
+        } else {
+          print(plot(x[,j], y, xlab=xlab_names[[i]], ylab= "FIST efficiency", main=sprintf("b=%0.2f", best_alasso_coef1[selected_attributes][i]), ylim=c(0, 10),  xlim=c(-.6, .75), cex.axis=1.5, cex.lab=1.75, cex.main=2, cex=2, lwd=1.5))
+        }
       } 
     }
-    dev.print(pdf, "LASSO_plots.pdf")
     dev.off()
         
+    
