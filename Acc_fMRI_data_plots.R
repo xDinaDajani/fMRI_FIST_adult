@@ -46,13 +46,13 @@ p <- ggplot(Acc.vector, aes(x=Run, y=FlexibilityScore)) +
   stat_summary(fun.y=mean, geom="point", shape=18, size=4, color="red") +
   theme_classic() + 
   ylim(0,10) +
-  labs(x="", y = "Accuracy-RT") +
-  ggtitle("fMRI Task Performance") +
+  labs(x="", y = "Efficiency") +
+  #ggtitle("fMRI Task Performance") +
   theme(plot.title = element_text(hjust = .5, size=16), axis.text=element_text(size=12), axis.title.y=element_text(size=14))
 p
 
 ggsave(p, 
-       filename = "plots/fMRI task/Figure3.pdf",
+       filename = "plots/fMRI task/Figure4.pdf",
        device=cairo_pdf,
        width=5,
        height=5,
