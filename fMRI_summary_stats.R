@@ -21,25 +21,23 @@ sumstats <- with(acc.dat, psych::describe(acc.dat[,2:ncol(acc.dat)]))
                                             "fMRIRun2MeanFlexTrialAcc", 
                                             "fMRIRun3MeanFlexTrialAcc", 
                                             "fMRIRun4MeanFlexTrialAcc"))
-    range_flex_acc <- range(fmriAcc.vector[,1])
-    mean_flex_acc <- mean(fmriAcc.vector[,1])
-    sd_flex_acc <- sd(fmriAcc.vector[,1])
     fmriAcc_Cnt.vector<-stack(acc.dat, select=c("fMRIRun1CntAcc", 
                                                 "fMRIRun2CntAcc", 
                                                 "fMRIRun3CntAcc", 
                                                 "fMRIRun4CntAcc"))
-    range_control_acc <- range(fmriAcc_Cnt.vector[,1])
-    mean_control_acc <-mean(fmriAcc_Cnt.vector[,1])
-    sd_control_acc <-sd(fmriAcc_Cnt.vector[,1])
+    
+  # Efficiency (Acc-RT)
+    fmriEff.vector<-stack(acc.dat, select=c("accRT_DV_Run1", 
+                                            "accRT_DV_Run2", 
+                                            "accRT_DV_Run3", 
+                                            "accRT_DV_Run4"))
   
   # Median of median RT across all runs
     fmriRT.vector<-stack(acc.dat, select=c("Med_RT_Run1", "Med_RT_Run2", "Med_RT_Run3", "Med_RT_Run4"))
-    range_flex_RT <- range(fmriRT.vector[,1], na.rm=TRUE)
-    med_flex_RT <- median(fmriRT.vector[,1], na.rm=TRUE)
-    sd_flex_RT <- sd(fmriRT.vector[,1], na.rm=TRUE)
-  
-  allruns <- data.frame(mean_flex_acc, sd_flex_acc, mean_control_acc, sd_control_acc, med_flex_RT, sd_flex_RT)
-  allruns
+    
+  # put in a single df
+    all_runs.df <-data.frame(fmriAcc.vector[,1], fmriAcc_Cnt.vector[,1], fmriRT.vector[,1], fmriEff.vector[,1])
+    sumsats_allruns<-describe(all_runs.df)
   
 #========Table of run-level stats========================================================
   
@@ -52,33 +50,31 @@ sumstats <- with(acc.dat, psych::describe(acc.dat[,2:ncol(acc.dat)]))
   sumstats_ordered <- rbind(sumstats[seq(1,16,4),],
                             sumstats[seq(2,16,4),],
                             sumstats[seq(3,16,4),],
-                            sumstats[seq(4,16,4),])
+                            sumstats[seq(4,16,4),],
+                            sumsats_allruns)
   
   # Mean and SD information that I want in my table
   my_matrix <- as.matrix(cbind(sumstats_ordered[,8:9], sumstats_ordered[,3:4]))
-  rownames(my_matrix)[seq(1,16,4)] <- "Flexibility Accuracy"
-  rownames(my_matrix)[seq(2,16,4)] <- "Control Accuracy"
-  rownames(my_matrix)[seq(3,16,4)] <- "Flexibility Median RT (ms)"
-  rownames(my_matrix)[seq(4,16,4)] <- "Flexibility Accuracy-RT"
-  
-  # Insert median for RT info
-  my_matrix[seq(3,16,4),3] <- medians[seq(9,12)]  
+  rownames(my_matrix)[seq(1,20,4)] <- "Flexibility Accuracy"
+  rownames(my_matrix)[seq(2,20,4)] <- "Control Accuracy"
+  rownames(my_matrix)[seq(3,20,4)] <- "Flexibility Median RT (ms)"
+  rownames(my_matrix)[seq(4,20,4)] <- "Flexibility Accuracy-RT"
   
   # Capitalize column names
   colnames(my_matrix) <-c("Min", "Max", "Mean", "SD")
   
-  # Round all data to two decimal places except RT (integer)
+  # Round all data to two decimal places
   my_matrix <- round(my_matrix, 2)
-  my_matrix[seq(3,16,4),] <- round(my_matrix[seq(3,16,4),], 0)
   # Make table!   
-  kable(my_matrix, "html", caption = "", align=c(rep('c', 5))) %>%
+  kable(my_matrix, "html", caption = "", align='c', 5) %>%
     kable_styling("hover", 
                   full_width = F,
                   position = "center") %>%
     group_rows("Run 1", 1, 4) %>%
     group_rows("Run 2", 5, 8) %>%
     group_rows("Run 3", 9, 12) %>%
-    group_rows("Run 4", 13, 16)
+    group_rows("Run 4", 13, 16) %>%
+    group_rows("All Runs", 17, 20)
   
 #=====Compare accuracy between control and Flex trials===================================
   
