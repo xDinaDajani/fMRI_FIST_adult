@@ -9,7 +9,7 @@ getwd()
 dev.off()
 
 # ==========LOAD DATA ========================================================================
-acc.dat <- read.csv("Acc_data_fMRI_task_newDV_final4.23.18.csv", header = T, na = "") 
+acc.dat <- read.csv("Acc_data_fMRI_task_newDV_5.18.19_updated.csv", header = T, na = "") 
 acc_CB.dat <- read.csv("Acc_data_computer_task_final4.9.18.csv", header = T)
 library(readxl)
 RBQ.dat <- read_excel(paste0(dirname(path), '/FST_export_7.24.18.xlsx'), na="-999")

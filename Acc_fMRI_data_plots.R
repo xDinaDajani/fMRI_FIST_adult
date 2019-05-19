@@ -13,7 +13,7 @@ getwd()
 # acc.dat$meanfMRIacc <-rowMeans(acc.dat[,6:9])
 # acc.dat$meanfMRIacc_control <-rowMeans(acc.dat[,10:13])
 # write.csv(acc.dat, "Acc_RT_data_DD_v2.csv", row.names=F)
-acc.dat <- read.csv("Acc_data_fMRI_task_newDV_final4.23.18.csv", header = T) 
+acc.dat <- read.csv("Acc_data_fMRI_task_newDV_5.18.19_updated.csv", header = T) 
 
 
 hist(acc.dat$fMRIRun1MeanFlexTrialAcc, main = "fMRI Run 1 Flex Trials Histogram")
@@ -52,8 +52,8 @@ p <- ggplot(Acc.vector, aes(x=Run, y=FlexibilityScore)) +
 p
 
 ggsave(p, 
-       filename = "plots/fMRI task/Figure4.pdf",
-       device=cairo_pdf,
+       filename = "plots/fMRI task/Figure4_updatedDV.pdf",
+       device=pdf,
        width=5,
        height=5,
        units = "in")
